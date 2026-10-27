@@ -1,0 +1,4 @@
+# The PhotoCraft checkout layer/build-tree.sh turns into Loloshop (and its build output).
+/upstream/
+/craft-fonts/
+/dist/

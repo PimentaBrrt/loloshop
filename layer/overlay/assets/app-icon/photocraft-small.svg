@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Loloshop</title>
+  <defs>
+    <clipPath id="tile">
+      <rect width="512" height="512" rx="112"/>
+    </clipPath>
+    <linearGradient id="field" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7a8a"/>
+      <stop offset="1" stop-color="#8b3dff"/>
+    </linearGradient>
+    <linearGradient id="heart" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#ffe3ec"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#field)"/>
+    <!-- A selection marquee (marching ants) with transform handles, around a heart. -->
+    <rect x="100" y="100" width="312" height="312" rx="4" fill="none" stroke="#ffffff" stroke-opacity="0.9" stroke-width="10" stroke-dasharray="28 18"/>
+    <g fill="#ffffff">
+      <rect x="86" y="86" width="28" height="28" rx="5"/>
+      <rect x="398" y="86" width="28" height="28" rx="5"/>
+      <rect x="86" y="398" width="28" height="28" rx="5"/>
+      <rect x="398" y="398" width="28" height="28" rx="5"/>
+    </g>
+    <path d="M256 372 C 158 304 124 252 146 203 C 166 160 226 154 256 202 C 286 154 346 160 366 203 C 388 252 354 304 256 372 Z" fill="url(#heart)"/>
+  </g>
+</svg>

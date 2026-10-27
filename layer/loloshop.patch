@@ -1,0 +1,250 @@
+diff --git a/apps/photocraft-cli/build.rs b/apps/photocraft-cli/build.rs
+index af544ed92..568d08028 100644
+--- a/apps/photocraft-cli/build.rs
++++ b/apps/photocraft-cli/build.rs
+@@ -27,8 +27,8 @@ fn main() -> std::io::Result<()> {
+     res.set_icon("../../assets/app-icon/photocraft.ico")
+         .set("ProductName", "Loloshop")
+         .set("FileDescription", "Loloshop command-line interface")
+-        .set("CompanyName", "Learning Machines LLC")
+-        .set("LegalCopyright", "Copyright (c) the Loloshop authors. MIT OR Apache-2.0.")
++        .set("CompanyName", "Loloshop")
++        .set("LegalCopyright", "Copyright (c) the PhotoCraft authors (Loloshop is a modified fork). MIT OR Apache-2.0.")
+         .set("OriginalFilename", "photocraft-cli.exe")
+         .set("InternalName", "photocraft-cli");
+     if let Err(err) = res.compile() {
+diff --git a/apps/photocraft/build.rs b/apps/photocraft/build.rs
+index 6de8c1923..21e558e54 100644
+--- a/apps/photocraft/build.rs
++++ b/apps/photocraft/build.rs
+@@ -23,8 +23,8 @@ fn main() {
+     res.set_icon("../../assets/app-icon/photocraft.ico")
+         .set("ProductName", "Loloshop")
+         .set("FileDescription", "Loloshop image editor")
+-        .set("CompanyName", "Learning Machines LLC")
+-        .set("LegalCopyright", "Copyright (c) the Loloshop authors. MIT OR Apache-2.0.")
++        .set("CompanyName", "Loloshop")
++        .set("LegalCopyright", "Copyright (c) the PhotoCraft authors (Loloshop is a modified fork). MIT OR Apache-2.0.")
+         .set("OriginalFilename", "photocraft.exe")
+         .set("InternalName", "photocraft");
+     if let Err(e) = res.compile() {
+diff --git a/apps/photocraft/src/updates.rs b/apps/photocraft/src/updates.rs
+index 0e981d796..e571ac0e9 100644
+--- a/apps/photocraft/src/updates.rs
++++ b/apps/photocraft/src/updates.rs
+@@ -20,8 +20,8 @@ pub fn service() -> CheckFn {
+     })
+ }
+ 
++/// Loloshop has no releases of its own: the upstream check would offer PhotoCraft's, and its
++/// self-update would replace this build with them. Always report that there is nothing newer.
+ fn check() -> CheckResult {
+-    let http = craft_update::Http::new("Loloshop/Update")?;
+-    let found = craft_update::check_for_update(&craft_update::suite::PHOTOCRAFT, &http, photocraft_engine::build_info::VERSION)?;
+-    Ok(found.map(|release| Release { version: release.tag.trim_start_matches(['v', 'V']).to_string(), url: release.html_url }))
++    Ok(None::<Release>)
+ }
+diff --git a/crates/engine/src/shell_commands.rs b/crates/engine/src/shell_commands.rs
+index f95e198f6..5cbefc6c9 100644
+--- a/crates/engine/src/shell_commands.rs
++++ b/crates/engine/src/shell_commands.rs
+@@ -89,11 +89,6 @@ pub const SHELL_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
+     ("window.theme.softLight", "Soft", &["Window", "Theme", "Light Theme"], None),
+     ("window.theme.system", "Sync with system", &["Window", "Theme"], None),
+     ("edit.search", "Search…", &["Edit"], Some("Cmd+F")),
+-    ("help.discord", "Join the ArtCraft Discord…", &["Help"], None),
+-    ("help.website", "Loloshop Website", &["Help"], None),
+-    ("help.artcraftWebsite", "ArtCraft Website", &["Help"], None),
+-    ("help.github", "Loloshop on GitHub", &["Help"], None),
+-    ("help.reportIssue", "Report an Issue…", &["Help"], None),
+     ("help.systemInfo", "System Info…", &["Help"], None),
+     ("help.about", "About Loloshop", &["Help"], None),
+ ];
+diff --git a/crates/ui-egui/src/canvas/start_screen.rs b/crates/ui-egui/src/canvas/start_screen.rs
+index 2ba07ef0c..efac95d76 100644
+--- a/crates/ui-egui/src/canvas/start_screen.rs
++++ b/crates/ui-egui/src/canvas/start_screen.rs
+@@ -79,8 +79,6 @@ pub(super) fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
+                 home_recent(app, ui, &recent);
+             }
+             ui.add_space(26.0);
+-            crate::links::discord_button(app, ui, 190.0);
+-            ui.add_space(10.0);
+             crate::links::link_row(app, ui);
+         });
+     });
+diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
+index 29a1b471f..089a194bf 100644
+--- a/crates/ui-egui/src/dialogs.rs
++++ b/crates/ui-egui/src/dialogs.rs
+@@ -703,11 +703,7 @@ fn about_tab_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, tab: &str) {
+             ui.label(tl!("Loloshop — an open-source, native image editor written in Rust."));
+             ui.label(crate::i18n::fmt(tl!("Version {version}"), &[("version", &photocraft_engine::build_info::long_version())]));
+             ui.add_space(12.0);
+-            ui.vertical_centered(|ui| {
+-                crate::links::discord_button(app, ui, 220.0);
+-                ui.add_space(8.0);
+-                crate::links::link_row(app, ui);
+-            });
++            ui.vertical_centered(|ui| crate::links::link_row(app, ui));
+             ui.add_space(10.0);
+             ui.weak("egui · wgpu · photocraft-engine");
+         }
+diff --git a/crates/ui-egui/src/i18n/pt-br.tsv b/crates/ui-egui/src/i18n/pt-br.tsv
+index f9357db9c..db8f6a8a3 100644
+--- a/crates/ui-egui/src/i18n/pt-br.tsv
++++ b/crates/ui-egui/src/i18n/pt-br.tsv
+@@ -785,6 +785,7 @@
+ 	About Loloshop	Sobre o Loloshop
+ 	Loloshop Website	Site do Loloshop
+ 	Loloshop on GitHub	Loloshop no GitHub
++	Based on PhotoCraft	Baseado no PhotoCraft
+ 	ArtCraft Website	Site do ArtCraft
+ 	Join the ArtCraft Discord…	Participe do Discord do ArtCraft…
+ 	Report an Issue…	Relatar um problema…
+diff --git a/crates/ui-egui/src/links.rs b/crates/ui-egui/src/links.rs
+index ff64380ad..2345022da 100644
+--- a/crates/ui-egui/src/links.rs
++++ b/crates/ui-egui/src/links.rs
+@@ -1,20 +1,14 @@
+-//! Community and project links: the Help menu, the About dialog, the start screen and the title
+-//! bar all open these. URLs follow the crafting-app pattern (`getartcraft.com/apps/<app>`,
+-//! `github.com/storytold/<app>`).
++//! Project links: the About dialog and the start screen open these. Loloshop has no website or
++//! community of its own, so the only link is the credit to PhotoCraft, the project it is built on.
+ 
+ use serde_json::{Value, json};
+ 
+ use crate::PhotocraftApp;
+ 
+-pub const DISCORD: &str = "https://discord.gg/artcraft";
+-pub const ARTCRAFT_WEBSITE: &str = "https://getartcraft.com";
+-pub const APP_PAGE: &str = "https://getartcraft.com/apps/photocraft";
+-pub const GITHUB: &str = "https://github.com/storytold/photocraft";
+-pub const ISSUES: &str = "https://github.com/storytold/photocraft/issues";
++pub const UPSTREAM: &str = "https://github.com/storytold/photocraft";
+ 
+-/// Help-menu link commands: (id, url). Labels live in `menus::UI_COMMANDS`.
+-pub const COMMANDS: &[(&str, &str)] =
+-    &[("help.discord", DISCORD), ("help.website", APP_PAGE), ("help.artcraftWebsite", ARTCRAFT_WEBSITE), ("help.github", GITHUB), ("help.reportIssue", ISSUES)];
++/// Help-menu link commands: (id, url). Labels live in `menus::UI_COMMANDS`. None in Loloshop.
++pub const COMMANDS: &[(&str, &str)] = &[];
+ 
+ pub fn url_for(id: &str) -> Option<&'static str> {
+     COMMANDS.iter().find(|c| c.0 == id).map(|c| c.1)
+@@ -32,39 +26,20 @@ pub fn open(app: &mut PhotocraftApp, ctx: &egui::Context, url: &str) -> Value {
+     json!({"url": url})
+ }
+ 
+-/// The prominent "Join us on Discord" button.
+-pub fn discord_button(app: &mut PhotocraftApp, ui: &mut egui::Ui, min_width: f32) -> egui::Response {
+-    let r = crate::widgets::primary_button(ui, tl!("Join us on Discord"), min_width).on_hover_text(DISCORD);
+-    if r.clicked() {
+-        open(app, ui.ctx(), DISCORD);
+-    }
+-    r
+-}
+-
+-/// "Loloshop website · GitHub · ArtCraft" as links, centred. Clicks route through [`open`] (the
+-/// platform browser service) rather than `ui.hyperlink_to`, which uses the unreliable `ctx.open_url`.
++/// "Based on PhotoCraft" as a centred link to the upstream project. Clicks route through [`open`]
++/// (the platform browser service) rather than `ui.hyperlink_to`, which uses the unreliable `ctx.open_url`.
+ pub fn link_row(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
+     let t = crate::theme::Tokens::get(ui.ctx());
+-    let links = [(tl!("Loloshop website"), APP_PAGE), (tl!("GitHub"), GITHUB), (tl!("ArtCraft"), ARTCRAFT_WEBSITE)];
++    let label = tl!("Based on PhotoCraft");
+     let font = egui::FontId::proportional(12.5);
+-    let sep = "  ·  ";
+-    let width: f32 = links.iter().map(|(l, _)| ui.painter().layout_no_wrap((*l).into(), font.clone(), t.text).size().x).sum::<f32>()
+-        + 2.0 * ui.painter().layout_no_wrap(sep.into(), font.clone(), t.text).size().x;
+-    let mut clicked: Option<&str> = None;
++    let width = ui.painter().layout_no_wrap(label.into(), font.clone(), t.text).size().x;
++    let mut clicked = false;
+     ui.horizontal(|ui| {
+-        ui.spacing_mut().item_spacing.x = 0.0;
+         ui.add_space(((ui.available_width() - width) / 2.0).max(0.0));
+-        for (i, (label, url)) in links.iter().enumerate() {
+-            if i > 0 {
+-                ui.label(egui::RichText::new(sep).font(font.clone()).color(t.text_faint));
+-            }
+-            if ui.link(egui::RichText::new(*label).font(font.clone()).color(t.accent)).on_hover_text(*url).clicked() {
+-                clicked = Some(url);
+-            }
+-        }
++        clicked = ui.link(egui::RichText::new(label).font(font).color(t.accent)).on_hover_text(UPSTREAM).clicked();
+     });
+-    if let Some(url) = clicked {
+-        open(app, ui.ctx(), url);
++    if clicked {
++        open(app, ui.ctx(), UPSTREAM);
+     }
+ }
+ 
+@@ -74,8 +49,8 @@ mod tests {
+ 
+     #[test]
+     fn links_open_through_the_platform_service() {
+-        // Issue #14: links (Help menu, Discord button, start-page links) must open in the browser.
+-        // They route through the `open_url` service rather than the unreliable `ctx.open_url`.
++        // Issue #14: links must open in the browser. They route through the `open_url` service
++        // rather than the unreliable `ctx.open_url`.
+         use std::sync::{Arc, Mutex};
+         let opened: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+         let rec = opened.clone();
+@@ -88,51 +63,15 @@ mod tests {
+         };
+         let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), services);
+         let ctx = egui::Context::default();
+-        // Every Help-menu link id reaches the service with its URL.
+-        for (id, url) in COMMANDS {
+-            crate::menus::invoke(&mut app, &ctx, id, json!({})).unwrap();
+-            assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(*url), "{id}");
+-        }
+-        // The direct open() helper (Discord button / start-page links) also uses it.
+-        open(&mut app, &ctx, DISCORD);
+-        assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(DISCORD));
++        open(&mut app, &ctx, UPSTREAM);
++        assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(UPSTREAM));
++        assert_eq!(app.ui.status, format!("Opened {UPSTREAM}"));
+     }
+ 
+     #[test]
+-    fn help_menu_lists_links_then_separator_then_system_info_and_about() {
++    fn help_menu_lists_the_update_check_then_separator_then_system_info_and_about() {
+         let app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+         let help: Vec<String> = crate::menus::menu_items(&app).into_iter().filter(|i| i.path == ["Help"]).map(|i| i.id).collect();
+-        assert_eq!(
+-            help,
+-            [
+-                "help.discord",
+-                "help.website",
+-                "help.artcraftWebsite",
+-                "help.github",
+-                "help.reportIssue",
+-                "help.checkForUpdates",
+-                "---",
+-                "help.systemInfo",
+-                "help.about"
+-            ]
+-        );
+-        for (id, _) in COMMANDS {
+-            assert!(crate::menus::is_live(id) && crate::menus::is_enabled(&app, id), "{id}");
+-        }
+-    }
+-
+-    #[test]
+-    fn link_commands_open_their_urls() {
+-        let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+-        let ctx = egui::Context::default();
+-        for (id, url) in [
+-            ("help.discord", "https://discord.gg/artcraft"),
+-            ("help.website", "https://getartcraft.com/apps/photocraft"),
+-            ("help.github", "https://github.com/storytold/photocraft"),
+-        ] {
+-            let r = crate::menus::invoke(&mut app, &ctx, id, serde_json::json!({})).unwrap();
+-            assert_eq!(r["url"], url);
+-            assert_eq!(app.ui.status, format!("Opened {url}"));
+-        }
++        assert_eq!(help, ["help.checkForUpdates", "---", "help.systemInfo", "help.about"]);
+     }
+ }
