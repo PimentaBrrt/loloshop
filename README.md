@@ -1,7 +1,6 @@
 # Loloshop
 
-Um editor de imagens com camadas, máscaras, ajustes, texto, pincéis e arquivos PSD, feito como
-presente. ♥
+Um editor de imagens com camadas, máscaras, ajustes, texto, pincéis e arquivos PSD.
 
 Loloshop é o [PhotoCraft](https://github.com/storytold/photocraft) (editor de imagens de código
 aberto em Rust, MIT OR Apache-2.0) com outro nome, outro ícone e sem os links e o atualizador do
@@ -9,7 +8,7 @@ ArtCraft. Este repositório não guarda uma cópia do PhotoCraft: guarda só as 
 semana o GitHub Actions aplica essas mudanças no PhotoCraft mais novo, compila e publica um
 Release. Assim as novidades do PhotoCraft chegam sozinhas.
 
-## Instalar (no PC dela)
+## Instalar
 
 No PowerShell:
 
@@ -39,7 +38,7 @@ O workflow só publica quando o PhotoCraft ou a camada mudaram, e só se a compi
 passarem. Se algo falhar, a última versão continua sendo a que ela recebe, e o GitHub manda um
 e-mail avisando da falha.
 
-## Compilar aqui (Windows)
+## Compilar no Windows
 
 Precisa do Rust e do Visual Studio Build Tools (C++). No Git Bash, monte a árvore; no PowerShell,
 compile (no Git Bash, o `link` do coreutils atrapalha o linker do MSVC):
