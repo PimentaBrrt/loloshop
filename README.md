@@ -32,7 +32,7 @@ O log fica em `%LOCALAPPDATA%\Programs\Loloshop\atualizar.log`. Para remover:
 | `layer/build-tree.sh` | Monta a árvore do Loloshop a partir de um commit do PhotoCraft |
 | `layer/make-patch.sh` | Salva mudanças de código como o novo `loloshop.patch` |
 | `.github/workflows/release.yml` | Todo domingo: monta, compila, testa e publica o Release |
-| `install/` | Instalação e atualização no PC dela |
+| `install/` | Instalação e atualização automática no Windows |
 
 O workflow só publica quando o PhotoCraft ou a camada mudaram, e só se a compilação e os testes
 passarem. Se algo falhar, a última versão continua sendo a que ela recebe, e o GitHub manda um
