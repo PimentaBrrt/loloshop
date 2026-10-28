@@ -1,6 +1,6 @@
 name: Release
 
-# Every Sunday: take the newest PhotoCraft, apply the Loloshop layer, build, test and publish a
+# Every Sunday: take the newest PhotoCraft, apply the Loloshop layer, test, build and publish a
 # release with Loloshop-windows-x64.exe. Nothing is published when PhotoCraft and the layer haven't
 # changed since the last release, or when any step fails (the last release stays the latest).
 
@@ -30,7 +30,7 @@ concurrency:
 jobs:
   release:
     runs-on: windows-latest
-    timeout-minutes: 300
+    timeout-minutes: 180
     env:
       TARGET: x86_64-pc-windows-msvc
       GH_TOKEN: ${{ github.token }}
@@ -84,6 +84,21 @@ jobs:
         if: steps.tree.outputs.skip != 'true'
         with:
           workspaces: upstream
+          # The cache holds compiled dependencies, not results: a failed run still saves it.
+          cache-on-failure: true
+
+      - name: Test
+        if: steps.tree.outputs.skip != 'true' && !inputs.skip_tests
+        shell: pwsh
+        working-directory: upstream
+        env:
+          # The test profile, as PhotoCraft's own Windows CI: under --release every test binary goes
+          # through the release profile's thin LTO (3h50 of compiling), and photocraft-io's
+          # integration tests overflow the stack (STATUS_STACK_OVERFLOW).
+          CARGO_PROFILE_DEV_DEBUG: "0"
+        run: |
+          cargo test --locked -p photocraft-ui-egui -p photocraft-engine -p photocraft -p photocraft-io -p photocraft-codecs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build
         if: steps.tree.outputs.skip != 'true'
@@ -96,16 +111,6 @@ jobs:
           PHOTOCRAFT_BUILD_SHA: ${{ steps.tree.outputs.upstream }}
         run: |
           cargo build --release --locked -p photocraft --features heif --target $env:TARGET
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Test
-        if: steps.tree.outputs.skip != 'true' && !inputs.skip_tests
-        shell: pwsh
-        working-directory: upstream
-        env:
-          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: -C target-feature=+crt-static
-        run: |
-          cargo test --release --locked --target $env:TARGET -p photocraft-ui-egui -p photocraft-engine -p photocraft -p photocraft-io -p photocraft-codecs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Publish
