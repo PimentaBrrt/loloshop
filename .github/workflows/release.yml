@@ -74,7 +74,10 @@ jobs:
           git init -q craft-fonts
           git -C craft-fonts fetch -q --depth=1 https://github.com/storytold/craft-fonts.git "${{ steps.tree.outputs.fonts }}"
           git -C craft-fonts checkout -q FETCH_HEAD
-          echo "CRAFT_FONTS_DIR=$PWD/craft-fonts" >> "$GITHUB_ENV"
+          # A Windows path: cargo's build scripts can't read Git Bash's /d/a/... form. REQUIRED fails
+          # the build instead of leaving the Japanese, Chinese and Korean fonts out of the app.
+          echo "CRAFT_FONTS_DIR=$(cygpath -w "$PWD/craft-fonts")" >> "$GITHUB_ENV"
+          echo "CRAFT_FONTS_REQUIRED=1" >> "$GITHUB_ENV"
 
       - name: Rust
         if: steps.tree.outputs.skip != 'true'
