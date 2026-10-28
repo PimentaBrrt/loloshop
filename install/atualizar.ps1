@@ -66,6 +66,8 @@ foreach ($f in $Files) {
     Move-Item $new $exe -Force
     Move-Item "$new.txt" (Join-Path $Dir $f.Version) -Force
     Write-Log "instalada $($f.Name) $(Read-Tag (Join-Path $Dir $f.Version))"
+    # O Windows guarda o icone de cada caminho; isto faz os atalhos mostrarem o icone novo.
+    if ($f.Name -eq 'Loloshop.exe') { & "$env:SystemRoot\System32\ie4uinit.exe" -show 2>$null }
   } catch {
     Write-Log "nao deu para trocar $($f.Name): $_"
   }

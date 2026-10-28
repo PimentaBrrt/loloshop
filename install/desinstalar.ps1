@@ -3,6 +3,14 @@
 # Imagens\Loloshop Claude ficam.
 #   powershell -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\Programs\Loloshop\desinstalar.ps1"
 $ErrorActionPreference = 'Continue'
+if (Get-Process -Name 'Loloshop' -ErrorAction SilentlyContinue) {
+  Write-Host 'Feche o Loloshop (salve o que estiver aberto) e rode de novo.'
+  exit 1
+}
+# O Claude Desktop deixa o servidor MCP aberto, e um .exe aberto nao pode ser apagado. Fechar o
+# servidor so desconecta o Loloshop do Claude, que ja vai perder o servidor logo abaixo.
+Get-Process -Name 'loloshop-cli' -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Milliseconds 500
 Unregister-ScheduledTask -TaskName 'Loloshop - atualizar' -Confirm:$false -ErrorAction SilentlyContinue
 foreach ($link in @(
     (Join-Path ([Environment]::GetFolderPath('Programs')) 'Loloshop.lnk'),

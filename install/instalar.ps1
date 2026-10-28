@@ -37,6 +37,9 @@ foreach ($folder in 'Programs', 'Desktop') {
   $link.Description = 'Loloshop'
   $link.Save()
 }
+# O Windows guarda o icone de cada caminho: sem isso, um icone novo no mesmo Loloshop.exe so aparece
+# depois de reiniciar.
+& "$env:SystemRoot\System32\ie4uinit.exe" -show 2>$null
 
 # Ao entrar no Windows: um atalho escondido na pasta Inicializar.
 $startup = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Startup')) 'Loloshop - atualizar.lnk'))
