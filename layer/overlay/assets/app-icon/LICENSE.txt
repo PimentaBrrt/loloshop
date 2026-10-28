@@ -1,9 +1,9 @@
 Loloshop app icon (photocraft.svg, photocraft-small.svg and every file derived from them in
 this directory: photocraft-1024.png, photocraft.ico, hicolor/).
 
-Original artwork made for Loloshop: a heart inside a selection marquee with transform handles,
-on a coral-to-violet field. No third-party material. Licensed like the rest of the project,
-under either of
+Original artwork made for Loloshop: a purple giraffe in profile, in a pink painter's beret,
+holding a brush in her mouth beside the pink heart she just painted, on a cream-to-peach
+field. No third-party material. Licensed like the rest of the project, under either of
 
   * Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
   * MIT license (https://opensource.org/licenses/MIT)
