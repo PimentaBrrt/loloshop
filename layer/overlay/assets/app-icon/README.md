@@ -1,7 +1,7 @@
 # Loloshop app icon
 
-A **white heart inside a selection marquee**: dashed "marching ants" with four transform handles,
-on a full-bleed coral (`#ff7a8a`) to violet (`#8b3dff`) diagonal gradient.
+A **purple giraffe in profile, painting**: she wears a pink painter's beret, holds a brush in her
+mouth and has just painted a pink heart, on a cream (`#fff4e4`) to peach (`#ffd8c4`) gradient.
 
 A 512-unit tile (`viewBox="0 0 512 512"`), rounded square with `rx=112`. The file names keep
 PhotoCraft's (`photocraft.*`, `ai.storyteller.photocraft.png`) so the build scripts and packaging
