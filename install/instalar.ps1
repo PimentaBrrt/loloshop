@@ -37,9 +37,19 @@ foreach ($folder in 'Programs', 'Desktop') {
   $link.Description = 'Loloshop'
   $link.Save()
 }
-# O Windows guarda o icone de cada caminho: sem isso, um icone novo no mesmo Loloshop.exe so aparece
-# depois de reiniciar.
-& "$env:SystemRoot\System32\ie4uinit.exe" -show 2>$null
+# O Windows guarda o icone de cada arquivo: sem isso, um icone novo no mesmo Loloshop.exe so aparece
+# depois de reiniciar. atualizar.ps1 tem a mesma funcao para as atualizacoes.
+try {
+  if (-not ('Loloshop.Shell' -as [type])) {
+    Add-Type -Namespace Loloshop -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern void SHChangeNotify(int eventId, uint flags, string item1, IntPtr item2);'
+  }
+  foreach ($path in @($Exe, (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Loloshop.lnk'), (Join-Path ([Environment]::GetFolderPath('Programs')) 'Loloshop.lnk'))) {
+    [Loloshop.Shell]::SHChangeNotify(0x2000, 0x1005, $path, [IntPtr]::Zero) # SHCNE_UPDATEITEM, SHCNF_PATHW | SHCNF_FLUSH
+  }
+  [Loloshop.Shell]::SHChangeNotify(0x8000000, 0x1000, $null, [IntPtr]::Zero) # SHCNE_ASSOCCHANGED, SHCNF_FLUSH
+} catch {
+  Write-Host "Aviso: se o icone antigo continuar na Area de Trabalho, ele muda depois de reiniciar o PC."
+}
 
 # Ao entrar no Windows: um atalho escondido na pasta Inicializar.
 $startup = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Startup')) 'Loloshop - atualizar.lnk'))

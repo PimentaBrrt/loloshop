@@ -25,6 +25,25 @@ function Read-Tag([string] $Path) {
   return ''
 }
 
+# O Windows guarda o icone de cada arquivo e nao percebe quando o Loloshop.exe muda: avisar o
+# Explorer faz o .exe e os atalhos mostrarem o icone novo sem reiniciar (ie4uinit -show nao basta).
+function Update-Icons {
+  try {
+    if (-not ('Loloshop.Shell' -as [type])) {
+      Add-Type -Namespace Loloshop -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern void SHChangeNotify(int eventId, uint flags, string item1, IntPtr item2);'
+    }
+    foreach ($path in @(
+        (Join-Path $Dir 'Loloshop.exe'),
+        (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Loloshop.lnk'),
+        (Join-Path ([Environment]::GetFolderPath('Programs')) 'Loloshop.lnk'))) {
+      [Loloshop.Shell]::SHChangeNotify(0x2000, 0x1005, $path, [IntPtr]::Zero) # SHCNE_UPDATEITEM, SHCNF_PATHW | SHCNF_FLUSH
+    }
+    [Loloshop.Shell]::SHChangeNotify(0x8000000, 0x1000, $null, [IntPtr]::Zero) # SHCNE_ASSOCCHANGED, SHCNF_FLUSH
+  } catch {
+    Write-Log "nao deu para atualizar os icones: $_"
+  }
+}
+
 try {
   $release = Invoke-RestMethod "https://api.github.com/repos/$Repo/releases/latest" -Headers @{ 'User-Agent' = 'Loloshop-updater' }
   $tag = $release.tag_name
@@ -66,8 +85,7 @@ foreach ($f in $Files) {
     Move-Item $new $exe -Force
     Move-Item "$new.txt" (Join-Path $Dir $f.Version) -Force
     Write-Log "instalada $($f.Name) $(Read-Tag (Join-Path $Dir $f.Version))"
-    # O Windows guarda o icone de cada caminho; isto faz os atalhos mostrarem o icone novo.
-    if ($f.Name -eq 'Loloshop.exe') { & "$env:SystemRoot\System32\ie4uinit.exe" -show 2>$null }
+    if ($f.Name -eq 'Loloshop.exe') { Update-Icons }
   } catch {
     Write-Log "nao deu para trocar $($f.Name): $_"
   }
