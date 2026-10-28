@@ -2,6 +2,10 @@
 #   - o app em %LOCALAPPDATA%\Programs\Loloshop
 #   - atalhos "Loloshop" no Menu Iniciar e na Area de Trabalho
 #   - atualizacao automatica: ao entrar no Windows (pasta Inicializar) e todo dia ao meio-dia
+#   - o servidor MCP "loloshop" no Claude Desktop: le a pasta Imagens e grava em
+#     Imagens\Loloshop Claude
+#
+# Rodar de novo e seguro: atualiza tudo sem duplicar nada.
 #
 # No PowerShell:
 #   irm https://raw.githubusercontent.com/PimentaBrrt/loloshop/main/install/instalar.ps1 | iex
@@ -12,6 +16,7 @@ $ProgressPreference = 'SilentlyContinue'
 $Raw = 'https://raw.githubusercontent.com/PimentaBrrt/loloshop/main/install'
 $Dir = Join-Path $env:LOCALAPPDATA 'Programs\Loloshop'
 $Exe = Join-Path $Dir 'Loloshop.exe'
+$Cli = Join-Path $Dir 'loloshop-cli.exe'
 $Updater = Join-Path $Dir 'atualizar.ps1'
 $Run = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$Updater`""
 
@@ -50,4 +55,53 @@ try {
   Write-Host "Aviso: a tarefa diaria nao foi criada ($_). A atualizacao ainda roda ao entrar no Windows."
 }
 
+# O Claude Desktop le os servidores MCP de claude_desktop_config.json: em %APPDATA%\Claude, ou, na
+# versao da Microsoft Store, dentro da pasta do pacote. As outras configuracoes do arquivo ficam; a
+# primeira vez guarda uma copia em claude_desktop_config.json.antes-do-loloshop.
+function Set-ClaudeServer([string] $Folder, $Server) {
+  $path = Join-Path $Folder 'claude_desktop_config.json'
+  $config = $null
+  if (Test-Path $path) {
+    $text = [IO.File]::ReadAllText($path)
+    # JSON invalido para aqui, antes de mexer no arquivo.
+    if ($text.Trim()) { $config = $text | ConvertFrom-Json }
+    if (-not (Test-Path "$path.antes-do-loloshop")) { Copy-Item $path "$path.antes-do-loloshop" }
+  }
+  if (-not $config) { $config = New-Object PSObject }
+  if (-not $config.mcpServers) { $config | Add-Member -NotePropertyName mcpServers -NotePropertyValue (New-Object PSObject) -Force }
+  $config.mcpServers | Add-Member -NotePropertyName loloshop -NotePropertyValue $Server -Force
+  New-Item -ItemType Directory -Force -Path $Folder | Out-Null
+  # Sem isso, o Windows PowerShell 5.1 escreve listas como {"value": [...], "Count": n}.
+  Remove-TypeData System.Array -ErrorAction SilentlyContinue
+  [IO.File]::WriteAllText($path, ($config | ConvertTo-Json -Depth 32), (New-Object Text.UTF8Encoding $false))
+}
+
+$claude = $false
+if (Test-Path $Cli) {
+  $pictures = [Environment]::GetFolderPath('MyPictures')
+  $output = Join-Path $pictures 'Loloshop Claude'
+  New-Item -ItemType Directory -Force -Path $output | Out-Null
+  $server = [pscustomobject]@{
+    command = $Cli
+    args = @('mcp', '--automation-read-root', $pictures, '--automation-write-root', $output)
+  }
+  $folders = @(Join-Path $env:APPDATA 'Claude')
+  $folders += @(Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Packages') -Directory -Filter 'Claude_*' -ErrorAction SilentlyContinue |
+    ForEach-Object { Join-Path $_.FullName 'LocalCache\Roaming\Claude' } | Where-Object { Test-Path $_ })
+  foreach ($folder in $folders) {
+    try {
+      Set-ClaudeServer $folder $server
+      $claude = $true
+    } catch {
+      Write-Host "Aviso: nao deu para configurar o Claude Desktop em $folder ($_)."
+    }
+  }
+} else {
+  Write-Host 'Aviso: este Release ainda nao tem o servidor MCP; rode o instalador de novo depois da proxima versao.'
+}
+
 Write-Host 'Pronto! O Loloshop esta no Menu Iniciar e na Area de Trabalho.'
+if ($claude) {
+  Write-Host "No Claude Desktop: feche e abra o Claude (inclusive pelo icone perto do relogio) para ele ver o Loloshop."
+  Write-Host "O Claude pode abrir as imagens da pasta Imagens e salva o que fizer em $output."
+}

@@ -1,8 +1,9 @@
 name: Release
 
 # Every Sunday: take the newest PhotoCraft, apply the Loloshop layer, test, build and publish a
-# release with Loloshop-windows-x64.exe. Nothing is published when PhotoCraft and the layer haven't
-# changed since the last release, or when any step fails (the last release stays the latest).
+# release with Loloshop-windows-x64.exe (the app) and Loloshop-cli-windows-x64.exe (its MCP
+# server). Nothing is published when PhotoCraft, the layer and this workflow haven't changed since
+# the last release, or when any step fails (the last release stays the latest).
 
 on:
   schedule:
@@ -57,9 +58,9 @@ jobs:
         run: |
           bash layer/build-tree.sh upstream "${{ inputs.ref || 'main' }}"
           up=$(git -C upstream rev-parse HEAD~3)
-          # The layer folder's tree hash: commits that leave layer/ alone (README, installer) don't
-          # make a new release.
-          tag="build-${up:0:9}-$(git rev-parse --short=7 HEAD:layer)"
+          # A hash of what goes into the build, layer/ and this workflow: commits that leave both
+          # alone (README, installer) don't make a new release.
+          tag="build-${up:0:9}-$(git rev-parse HEAD:layer HEAD:.github/workflows/release.yml | git hash-object --stdin | cut -c1-7)"
           echo "upstream=$up" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "fonts=$(sed -n 's/^ *craft-fonts-ref: *\([0-9a-f]*\).*/\1/p' upstream/.github/workflows/release.yml)" >> "$GITHUB_OUTPUT"
@@ -100,7 +101,7 @@ jobs:
           # integration tests overflow the stack (STATUS_STACK_OVERFLOW).
           CARGO_PROFILE_DEV_DEBUG: "0"
         run: |
-          cargo test --locked -p photocraft-ui-egui -p photocraft-engine -p photocraft -p photocraft-io -p photocraft-codecs
+          cargo test --locked -p photocraft-ui-egui -p photocraft-engine -p photocraft -p photocraft-cli -p photocraft-io -p photocraft-codecs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build
@@ -113,7 +114,8 @@ jobs:
           PHOTOCRAFT_REQUIRE_WINRES: "1"
           PHOTOCRAFT_BUILD_SHA: ${{ steps.tree.outputs.upstream }}
         run: |
-          cargo build --release --locked -p photocraft --features heif --target $env:TARGET
+          # photocraft-cli is the MCP server the Claude Desktop runs (install/instalar.ps1).
+          cargo build --release --locked -p photocraft -p photocraft-cli --features heif --target $env:TARGET
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Publish
@@ -123,6 +125,7 @@ jobs:
           tag="${{ steps.tree.outputs.tag }}"
           mkdir -p dist
           cp "upstream/target/$TARGET/release/photocraft.exe" dist/Loloshop-windows-x64.exe
+          cp "upstream/target/$TARGET/release/photocraft-cli.exe" dist/Loloshop-cli-windows-x64.exe
           {
             echo "Loloshop built from PhotoCraft [\`${up:0:9}\`](https://github.com/storytold/photocraft/commit/$up) and this repository at \`$(git rev-parse --short=7 HEAD)\`."
             prev=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
@@ -132,6 +135,6 @@ jobs:
               echo "What's new in PhotoCraft since the last release: https://github.com/storytold/photocraft/compare/$prev_up...$up"
             fi
           } > dist/notes.md
-          gh release create "$tag" dist/Loloshop-windows-x64.exe \
+          gh release create "$tag" dist/Loloshop-windows-x64.exe dist/Loloshop-cli-windows-x64.exe \
             --title "Loloshop $(date -u +%F) (PhotoCraft ${up:0:9})" \
             --notes-file dist/notes.md --latest

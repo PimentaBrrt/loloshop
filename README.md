@@ -18,8 +18,16 @@ irm https://raw.githubusercontent.com/PimentaBrrt/loloshop/main/install/instalar
 
 Isso coloca o Loloshop no Menu Iniciar e na Área de Trabalho e liga a atualização automática
 (ao entrar no Windows e todo dia ao meio-dia). Com o app aberto, a versão nova espera ele fechar.
-O log fica em `%LOCALAPPDATA%\Programs\Loloshop\atualizar.log`. Para remover:
+O log fica em `%LOCALAPPDATA%\Programs\Loloshop\atualizar.log`. Rodar o comando de novo é seguro:
+atualiza tudo sem duplicar nada. Para remover:
 `%LOCALAPPDATA%\Programs\Loloshop\desinstalar.ps1`.
+
+### No Claude Desktop
+
+O instalador também registra o servidor MCP `loloshop` no Claude Desktop (o `photocraft-cli` do
+PhotoCraft, instalado como `loloshop-cli.exe`). Depois de fechar e abrir o Claude, dá para pedir
+coisas como "abre a foto praia.jpg das minhas Imagens, deixa em preto e branco e salva". O Claude
+lê a pasta Imagens e só grava em `Imagens\Loloshop Claude`; ele não precisa do Loloshop aberto.
 
 ## Como funciona
 
@@ -32,9 +40,9 @@ O log fica em `%LOCALAPPDATA%\Programs\Loloshop\atualizar.log`. Para remover:
 | `layer/build-tree.sh` | Monta a árvore do Loloshop a partir de um commit do PhotoCraft |
 | `layer/make-patch.sh` | Salva mudanças de código como o novo `loloshop.patch` |
 | `.github/workflows/release.yml` | Todo domingo: monta, testa, compila e publica o Release |
-| `install/` | Instalação e atualização automática no Windows |
+| `install/` | Instalação, atualização automática e registro no Claude Desktop, no Windows |
 
-O workflow só publica quando o PhotoCraft ou a camada mudaram, e só se a compilação e os testes
+O workflow só publica quando o PhotoCraft, a camada ou o próprio workflow mudaram, e só se a compilação e os testes
 passarem. Se algo falhar, a última versão continua sendo a que ela recebe, e o GitHub manda um
 e-mail avisando da falha.
 
