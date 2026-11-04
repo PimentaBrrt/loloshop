@@ -69,6 +69,17 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: No update check reaches PhotoCraft's releases
+        if: steps.tree.outputs.skip != 'true'
+        run: |
+          # Loloshop updates through install/atualizar.ps1: a check of PhotoCraft's releases would offer
+          # to replace Loloshop with PhotoCraft. Fail when the newest PhotoCraft adds one the layer doesn't stub.
+          if grep -rnE '\.check_at_start\(|\.check_now\(|check_for_update\(' upstream/apps upstream/crates --include=*.rs \
+              | grep -v 'CheckResultResponse::CheckAgain => rt.updater.check_now(ctx)'; then
+            echo "::error::PhotoCraft checks for updates outside the layer's stub; see the calls above"
+            exit 1
+          fi
+
       - name: Fetch craft-fonts
         if: steps.tree.outputs.skip != 'true' && steps.tree.outputs.fonts != ''
         run: |
