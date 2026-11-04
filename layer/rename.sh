@@ -9,7 +9,7 @@
 #   crates/cms/                       ICC profile descriptions, baked into committed .icc files
 #   files that mention `xmptk`        the XMP toolkit name that marks a sidecar as one we wrote
 #   crates/codecs/tests/it/orientation.rs   a byte-level EXIF test sized to "PhotoCraft"
-# and two tests are adjusted after the rename (below).
+# and a few lines that pair the name with its lowercase are adjusted after the rename (below).
 set -euo pipefail
 cd "$1"
 
@@ -29,4 +29,12 @@ fi
 LIVE=crates/ui-egui/src/i18n/live_tests.rs
 if [ -f "$LIVE" ]; then
   sed -i "/Loloshop stays at the right/s/x_in(&galley, 'P')/x_in(\&galley, 'L')/" "$LIVE"
+fi
+
+# The volume case probe makes a ".PhotoCraftCaseProbe-…" file and looks for it by the same name in
+# lowercase: Loloshop's lowercase is "loloshop", or the probe never finds its file and every
+# volume reads as case-sensitive (Windows' batch output "same file" checks).
+PATHS=crates/engine/src/cmd/file_cmds/paths.rs
+if [ -f "$PATHS" ]; then
+  sed -i 's/replacen("Loloshop", "photocraft", 1)/replacen("Loloshop", "loloshop", 1)/' "$PATHS"
 fi
