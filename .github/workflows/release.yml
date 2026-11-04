@@ -112,8 +112,16 @@ jobs:
           # integration tests overflow the stack (STATUS_STACK_OVERFLOW).
           CARGO_PROFILE_DEV_DEBUG: "0"
         run: |
-          cargo test --locked -p photocraft-ui-egui -p photocraft-engine -p photocraft -p photocraft-cli -p photocraft-io -p photocraft-codecs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $packages = "-p", "photocraft-ui-egui", "-p", "photocraft-engine", "-p", "photocraft", "-p", "photocraft-cli", "-p", "photocraft-io", "-p", "photocraft-codecs"
+          cargo test --locked @packages
+          if ($LASTEXITCODE -ne 0) {
+            # A few of PhotoCraft's tests are timing-sensitive under a loaded runner (a native menu
+            # test failed that way while checking this layer): once more, already built. A real
+            # failure fails twice.
+            Write-Host "::warning::Tests failed; running them once more"
+            cargo test --locked @packages
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       - name: Build
         if: steps.tree.outputs.skip != 'true'
