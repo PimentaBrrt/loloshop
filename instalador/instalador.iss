@@ -18,6 +18,10 @@ AppPublisher=PimentaBrrt
 AppPublisherURL=https://github.com/PimentaBrrt/loloshop
 ; Os apps ficam em %LOCALAPPDATA%\Programs\Loloshop e ...\Illostrator; aqui, só o desinstalador.
 DefaultDirName={localappdata}\Programs\Loloshop e Illostrator
+; O desinstalador do Inno seria um .exe sem assinatura, diferente em cada instalação: o Controle
+; Inteligente de Aplicativos do Windows o bloqueia. O de "Apps instalados" é o desinstalar.ps1
+; ([Registry], abaixo), que roda pelo PowerShell do Windows.
+Uninstallable=no
 DisableWelcomePage=no
 DisableDirPage=yes
 DisableProgramGroupPage=yes
@@ -31,8 +35,6 @@ WizardStyle=modern
 WizardImageFile=lateral-100.bmp,lateral-150.bmp,lateral-200.bmp
 WizardSmallImageFile=canto-100.bmp,canto-150.bmp,canto-200.bmp
 SetupIconFile=..\layer\overlay\assets\app-icon\photocraft.ico
-UninstallDisplayIcon={uninstallexe}
-UninstallDisplayName=Loloshop e Illostrator
 OutputDir=Output
 OutputBaseFilename=Instalar-Loloshop-e-Illostrator
 Compression=lzma2
@@ -71,9 +73,13 @@ Type: files; Name: "{localappdata}\Programs\Illostrator\*.part"; Components: ill
 ; O desinstalador de uma instalação feita por instalar.ps1: agora é o do Windows (Apps instalados).
 Type: files; Name: "{localappdata}\Programs\Loloshop\desinstalar.ps1"; Components: loloshop
 Type: files; Name: "{localappdata}\Programs\Illostrator\desinstalar.ps1"; Components: illostrator
+; O desinstalador do Inno de uma versão anterior deste instalador (a chave dele sai em [Code]).
+Type: files; Name: "{app}\unins000.*"
 
 [Files]
 Source: "configurar.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "desinstalar.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\layer\overlay\assets\app-icon\photocraft.ico"; DestDir: "{app}"; DestName: "Loloshop e Illostrator.ico"; Flags: ignoreversion
 ; Baixados para {tmp} na página "Pronto para instalar" (NextButtonClick, abaixo). ExternalSize é o
 ; tamanho aproximado de cada um, para a conta de espaço em disco do assistente.
 Source: "{tmp}\Loloshop.exe"; DestDir: "{localappdata}\Programs\Loloshop"; Flags: external ignoreversion; ExternalSize: 160000000; Components: loloshop
@@ -99,16 +105,17 @@ Name: "{userstartup}\Illostrator - atualizar"; Filename: "powershell.exe"; Param
 Filename: "{localappdata}\Programs\Loloshop\Loloshop.exe"; Description: "Abrir o Loloshop"; Flags: postinstall nowait skipifsilent unchecked; Components: loloshop
 Filename: "{localappdata}\Programs\Illostrator\Illostrator.exe"; Description: "Abrir o Illostrator"; Flags: postinstall nowait skipifsilent unchecked; Components: illostrator
 
-[UninstallRun]
-; A tarefa diária, os servidores MCP e os atalhos de uma instalação antiga, dos dois apps.
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\configurar.ps1"" -App Loloshop -Remove"; Flags: runhidden; RunOnceId: "RemoverLoloshop"
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\configurar.ps1"" -App Illostrator -Remove"; Flags: runhidden; RunOnceId: "RemoverIllostrator"
-
-[UninstallDelete]
-; As versões baixadas pelo atualizar.ps1 e o log. As preferências dos apps e as pastas
-; Imagens\Loloshop Claude e Imagens\Illostrator Claude ficam.
-Type: filesandordirs; Name: "{localappdata}\Programs\Loloshop"
-Type: filesandordirs; Name: "{localappdata}\Programs\Illostrator"
+[Registry]
+; A entrada em Configurações › Apps › Apps instalados; desinstalar.ps1 a apaga.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: string; ValueName: "DisplayName"; ValueData: "Loloshop e Illostrator"; Flags: deletekey
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: string; ValueName: "DisplayVersion"; ValueData: "{#Versao}"
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: string; ValueName: "Publisher"; ValueData: "PimentaBrrt"
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: string; ValueName: "DisplayIcon"; ValueData: "{app}\Loloshop e Illostrator.ico"
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: string; ValueName: "InstallLocation"; ValueData: "{app}"
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: string; ValueName: "UninstallString"; ValueData: "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""{app}\desinstalar.ps1"""
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: dword; ValueName: "NoModify"; ValueData: 1
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: dword; ValueName: "NoRepair"; ValueData: 1
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\Loloshop e Illostrator"; ValueType: dword; ValueName: "EstimatedSize"; ValueData: 610000
 
 [Code]
 var
@@ -223,22 +230,13 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
+  { A chave do desinstalador do Inno de uma versão anterior deste instalador. }
+  if CurStep = ssInstall then
+    RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{3024DDF6-8928-489F-944D-CE0CE1AF82E4}_is1');
   if CurStep <> ssPostInstall then
     Exit;
   if WizardIsComponentSelected('loloshop') then
     Configure('Loloshop');
   if WizardIsComponentSelected('illostrator') then
     Configure('Illostrator');
-end;
-
-function InitializeUninstall: Boolean;
-var
-  Code: Integer;
-begin
-  Result := True;
-  if Exec('powershell.exe', '-NoProfile -Command "if (Get-Process -Name Loloshop,Illostrator -ErrorAction SilentlyContinue) { exit 1 }"', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 1) then
-  begin
-    MsgBox('Feche o Loloshop e o Illostrator (salve o que estiver aberto) e tente de novo.', mbError, MB_OK);
-    Result := False;
-  end;
 end;
