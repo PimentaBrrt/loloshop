@@ -36,8 +36,8 @@ atualiza tudo sem duplicar nada. Para remover:
 
 ### No Claude Desktop
 
-O instalador também registra o servidor MCP `loloshop` no Claude Desktop (o `photocraft-cli` do
-PhotoCraft, instalado como `loloshop-cli.exe`). Depois de fechar e abrir o Claude, dá para pedir
+O instalador também registra o servidor MCP `loloshop` no Claude Desktop (o `loloshop-cli.exe`,
+instalado junto com o app). Depois de fechar e abrir o Claude, dá para pedir
 coisas como "abre a foto praia.jpg das minhas Imagens, deixa em preto e branco e salva". O Claude
 lê a pasta Imagens e só grava em `Imagens\Loloshop Claude`; ele não precisa do Loloshop aberto.
 

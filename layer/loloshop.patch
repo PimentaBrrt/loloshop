@@ -29,11 +29,11 @@ index 6de8c1923..21e558e54 100644
          .set("InternalName", "photocraft");
      if let Err(e) = res.compile() {
 diff --git a/apps/photocraft/src/updates.rs b/apps/photocraft/src/updates.rs
-index 310237d9a..e571ac0e9 100644
+index 31337f1ba..43580880c 100644
 --- a/apps/photocraft/src/updates.rs
 +++ b/apps/photocraft/src/updates.rs
-@@ -20,8 +20,8 @@ pub fn service() -> CheckFn {
-     })
+@@ -33,8 +33,8 @@ pub fn last_update() -> Option<Result<String, String>> {
+     }
  }
  
 +/// Loloshop has no releases of its own: the upstream check would offer PhotoCraft's, and its
@@ -45,10 +45,10 @@ index 310237d9a..e571ac0e9 100644
 +    Ok(None::<Release>)
  }
 diff --git a/crates/engine/src/shell_commands.rs b/crates/engine/src/shell_commands.rs
-index ea89f13b9..bafeabf4e 100644
+index d2d28b7a9..04154208c 100644
 --- a/crates/engine/src/shell_commands.rs
 +++ b/crates/engine/src/shell_commands.rs
-@@ -90,11 +90,6 @@ pub const SHELL_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
+@@ -93,11 +93,6 @@ pub const SHELL_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
      ("window.theme.softLight", "Soft", &["Window", "Theme", "Light Theme"], None),
      ("window.theme.system", "Sync with system", &["Window", "Theme"], None),
      ("edit.search", "Search…", &["Edit"], Some("Cmd+F")),
@@ -61,23 +61,72 @@ index ea89f13b9..bafeabf4e 100644
      ("help.about", "About Loloshop", &["Help"], None),
  ];
 diff --git a/crates/ui-egui/src/canvas/start_screen.rs b/crates/ui-egui/src/canvas/start_screen.rs
-index 4118e49c9..826b5ee53 100644
+index 7f9d0ebac..6fcf86d77 100644
 --- a/crates/ui-egui/src/canvas/start_screen.rs
 +++ b/crates/ui-egui/src/canvas/start_screen.rs
-@@ -79,8 +79,6 @@ pub(super) fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
-                 home_recent(app, ui, &recent);
-             }
-             ui.add_space(26.0);
--            crate::links::discord_button(app, ui, 190.0);
--            ui.add_space(10.0);
-             crate::links::link_row(app, ui);
-         });
-     });
+@@ -142,27 +142,6 @@ fn render_start_rail(app: &mut PhotocraftApp, ui: &mut egui::Ui, rail_w: f32) {
+ 
+     ui.add_space(4.0);
+ 
+-    // 4. "Learn" Nav Item
+-    let (learn_rect, learn_resp) = ui.allocate_exact_size(egui::vec2(rail_w, 32.0), Sense::click());
+-    let learn_resp = learn_resp.on_hover_cursor(egui::CursorIcon::PointingHand);
+-    learn_resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, tl!("Learn")));
+-    if learn_resp.hovered() {
+-        ui.painter().rect_filled(learn_rect, 4.0, t.hover);
+-    }
+-    let learn_color = if learn_resp.hovered() { t.text } else { t.text_dim };
+-    let sparkle_box = Rect::from_center_size(egui::pos2(learn_rect.left() + 20.0, learn_rect.center().y), egui::vec2(16.0, 16.0));
+-    crate::icons::paint(ui, sparkle_box, "sparkles", 16.0, learn_color);
+-    ui.painter().text(
+-        egui::pos2(learn_rect.left() + 34.0, learn_rect.center().y),
+-        egui::Align2::LEFT_CENTER,
+-        tl!("Learn"),
+-        crate::theme::semibold(13.5),
+-        learn_color,
+-    );
+-    if learn_resp.clicked() {
+-        crate::links::open(app, ui.ctx(), crate::links::TUTORIALS);
+-    }
+-
+     // 5. Bottom pinned community links
+     let bottom_h = 100.0;
+     let avail_h = ui.available_height();
+@@ -174,25 +153,10 @@ fn render_start_rail(app: &mut PhotocraftApp, ui: &mut egui::Ui, rail_w: f32) {
+ 
+     ui.add_space(8.0);
+ 
+-    render_rail_link(app, ui, rail_w, tl!("Website"), "link", crate::links::APP_PAGE);
+-    render_rail_link(app, ui, rail_w, tl!("Discord"), "message-square", crate::links::DISCORD);
+-    render_rail_link(app, ui, rail_w, tl!("GitHub"), "link-2", crate::links::GITHUB);
+-}
+-
+-fn render_rail_link(app: &mut PhotocraftApp, ui: &mut egui::Ui, rail_w: f32, label: &str, icon_name: &str, url: &str) {
+-    let t = crate::theme::Tokens::get(ui.ctx());
+-    let (rect, resp) = ui.allocate_exact_size(egui::vec2(rail_w, 28.0), Sense::click());
+-    let resp = resp.on_hover_cursor(egui::CursorIcon::PointingHand).on_hover_text(url);
+-    if resp.hovered() {
+-        ui.painter().rect_filled(rect, 4.0, t.hover);
+-    }
+-    let color = if resp.hovered() { t.text } else { t.text_dim };
+-    let icon_box = Rect::from_center_size(egui::pos2(rect.left() + 20.0, rect.center().y), egui::vec2(14.0, 14.0));
+-    crate::icons::paint(ui, icon_box, icon_name, 14.0, color);
+-    ui.painter().text(egui::pos2(rect.left() + 34.0, rect.center().y), egui::Align2::LEFT_CENTER, label, crate::theme::medium(12.0), color);
+-    if resp.clicked() {
+-        crate::links::open(app, ui.ctx(), url);
+-    }
++    // Loloshop has no website or community of its own: only what it is based on, as plain text.
++    let (rect, _) = ui.allocate_exact_size(egui::vec2(rail_w, 28.0), Sense::hover());
++    let at = egui::pos2(rect.left() + 8.0, rect.center().y);
++    ui.painter().text(at, egui::Align2::LEFT_CENTER, tl!("Based on Photoshop"), crate::theme::medium(12.0), t.text_dim);
+ }
+ 
+ fn render_start_content(app: &mut PhotocraftApp, ui: &mut egui::Ui, recent: &[String], content_w: f32) {
 diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
-index 5c7dc8a9d..0466e7703 100644
+index 4ac23666d..b2632c1e1 100644
 --- a/crates/ui-egui/src/dialogs.rs
 +++ b/crates/ui-egui/src/dialogs.rs
-@@ -789,11 +789,7 @@ fn about_tab_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, tab: &str) {
+@@ -828,11 +828,7 @@ fn about_tab_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, tab: &str) {
              ui.label(tl!("Loloshop — an open-source, native image editor written in Rust."));
              ui.label(crate::i18n::fmt(tl!("Version {version}"), &[("version", &photocraft_engine::build_info::long_version())]));
              ui.add_space(12.0);
@@ -91,27 +140,27 @@ index 5c7dc8a9d..0466e7703 100644
              ui.weak("egui · wgpu · photocraft-engine");
          }
 diff --git a/crates/ui-egui/src/i18n/pt-br.tsv b/crates/ui-egui/src/i18n/pt-br.tsv
-index a2ccc2cde..2966e82e2 100644
+index e235b73ef..6731fdd54 100644
 --- a/crates/ui-egui/src/i18n/pt-br.tsv
 +++ b/crates/ui-egui/src/i18n/pt-br.tsv
-@@ -879,6 +879,7 @@
+@@ -895,6 +895,7 @@
  	About Loloshop	Sobre o Loloshop
  	Loloshop Website	Site do Loloshop
  	Loloshop on GitHub	Loloshop no GitHub
-+	Based on PhotoCraft	Baseado no PhotoCraft
++	Based on Photoshop	Baseado no Photoshop
  	ArtCraft Website	Site do ArtCraft
  	Join the ArtCraft Discord…	Participe do Discord do ArtCraft…
  	Report an Issue…	Relatar um problema…
 diff --git a/crates/ui-egui/src/links.rs b/crates/ui-egui/src/links.rs
-index ff64380ad..2345022da 100644
+index bde02bf57..007c96c88 100644
 --- a/crates/ui-egui/src/links.rs
 +++ b/crates/ui-egui/src/links.rs
-@@ -1,20 +1,14 @@
+@@ -1,21 +1,12 @@
 -//! Community and project links: the Help menu, the About dialog, the start screen and the title
 -//! bar all open these. URLs follow the crafting-app pattern (`getartcraft.com/apps/<app>`,
 -//! `github.com/storytold/<app>`).
-+//! Project links: the About dialog and the start screen open these. Loloshop has no website or
-+//! community of its own, so the only link is the credit to PhotoCraft, the project it is built on.
++//! Project links. Loloshop has no website or community of its own: the About dialog and the
++//! start screen only say what it is based on, without a link.
  
  use serde_json::{Value, json};
  
@@ -120,10 +169,10 @@ index ff64380ad..2345022da 100644
 -pub const DISCORD: &str = "https://discord.gg/artcraft";
 -pub const ARTCRAFT_WEBSITE: &str = "https://getartcraft.com";
 -pub const APP_PAGE: &str = "https://getartcraft.com/apps/photocraft";
+-pub const TUTORIALS: &str = "https://getartcraft.com/tutorials";
 -pub const GITHUB: &str = "https://github.com/storytold/photocraft";
 -pub const ISSUES: &str = "https://github.com/storytold/photocraft/issues";
-+pub const UPSTREAM: &str = "https://github.com/storytold/photocraft";
- 
+-
 -/// Help-menu link commands: (id, url). Labels live in `menus::UI_COMMANDS`.
 -pub const COMMANDS: &[(&str, &str)] =
 -    &[("help.discord", DISCORD), ("help.website", APP_PAGE), ("help.artcraftWebsite", ARTCRAFT_WEBSITE), ("help.github", GITHUB), ("help.reportIssue", ISSUES)];
@@ -132,7 +181,7 @@ index ff64380ad..2345022da 100644
  
  pub fn url_for(id: &str) -> Option<&'static str> {
      COMMANDS.iter().find(|c| c.0 == id).map(|c| c.1)
-@@ -32,39 +26,20 @@ pub fn open(app: &mut PhotocraftApp, ctx: &egui::Context, url: &str) -> Value {
+@@ -33,40 +24,16 @@ pub fn open(app: &mut PhotocraftApp, ctx: &egui::Context, url: &str) -> Value {
      json!({"url": url})
  }
  
@@ -147,19 +196,18 @@ index ff64380ad..2345022da 100644
 -
 -/// "Loloshop website · GitHub · ArtCraft" as links, centred. Clicks route through [`open`] (the
 -/// platform browser service) rather than `ui.hyperlink_to`, which uses the unreliable `ctx.open_url`.
-+/// "Based on PhotoCraft" as a centred link to the upstream project. Clicks route through [`open`]
-+/// (the platform browser service) rather than `ui.hyperlink_to`, which uses the unreliable `ctx.open_url`.
- pub fn link_row(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
+-pub fn link_row(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
++/// "Based on Photoshop", centred, as plain text (where PhotoCraft had its links).
++pub fn link_row(_app: &mut PhotocraftApp, ui: &mut egui::Ui) {
      let t = crate::theme::Tokens::get(ui.ctx());
 -    let links = [(tl!("Loloshop website"), APP_PAGE), (tl!("GitHub"), GITHUB), (tl!("ArtCraft"), ARTCRAFT_WEBSITE)];
-+    let label = tl!("Based on PhotoCraft");
++    let label = tl!("Based on Photoshop");
      let font = egui::FontId::proportional(12.5);
 -    let sep = "  ·  ";
 -    let width: f32 = links.iter().map(|(l, _)| ui.painter().layout_no_wrap((*l).into(), font.clone(), t.text).size().x).sum::<f32>()
 -        + 2.0 * ui.painter().layout_no_wrap(sep.into(), font.clone(), t.text).size().x;
 -    let mut clicked: Option<&str> = None;
 +    let width = ui.painter().layout_no_wrap(label.into(), font.clone(), t.text).size().x;
-+    let mut clicked = false;
      ui.horizontal(|ui| {
 -        ui.spacing_mut().item_spacing.x = 0.0;
          ui.add_space(((ui.available_width() - width) / 2.0).max(0.0));
@@ -171,16 +219,15 @@ index ff64380ad..2345022da 100644
 -                clicked = Some(url);
 -            }
 -        }
-+        clicked = ui.link(egui::RichText::new(label).font(font).color(t.accent)).on_hover_text(UPSTREAM).clicked();
++        ui.label(egui::RichText::new(label).font(font).color(t.text_faint));
      });
 -    if let Some(url) = clicked {
 -        open(app, ui.ctx(), url);
-+    if clicked {
-+        open(app, ui.ctx(), UPSTREAM);
-     }
+-    }
  }
  
-@@ -74,8 +49,8 @@ mod tests {
+ #[cfg(test)]
+@@ -75,8 +42,8 @@ mod tests {
  
      #[test]
      fn links_open_through_the_platform_service() {
@@ -191,7 +238,7 @@ index ff64380ad..2345022da 100644
          use std::sync::{Arc, Mutex};
          let opened: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
          let rec = opened.clone();
-@@ -88,51 +63,15 @@ mod tests {
+@@ -89,51 +56,16 @@ mod tests {
          };
          let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), services);
          let ctx = egui::Context::default();
@@ -203,9 +250,10 @@ index ff64380ad..2345022da 100644
 -        // The direct open() helper (Discord button / start-page links) also uses it.
 -        open(&mut app, &ctx, DISCORD);
 -        assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(DISCORD));
-+        open(&mut app, &ctx, UPSTREAM);
-+        assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(UPSTREAM));
-+        assert_eq!(app.ui.status, format!("Opened {UPSTREAM}"));
++        let url = "https://example.com/";
++        open(&mut app, &ctx, url);
++        assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(url));
++        assert_eq!(app.ui.status, format!("Opened {url}"));
      }
  
      #[test]
