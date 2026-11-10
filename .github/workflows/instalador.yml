@@ -1,0 +1,48 @@
+name: Instalador
+
+# Compiles instalador/instalador.iss (Inno Setup, preinstalled on the Windows runner) into
+# Instalar-Loloshop-e-Illostrator.exe and puts it on the "instalador" release. The setup downloads
+# the newest apps when it runs, so it is rebuilt only when the installer itself changes, not on
+# every app release.
+#
+# The release is a prerelease: GitHub never picks a prerelease as the latest release, which is what
+# install/atualizar.ps1 and release.yml read. Download link:
+#   https://github.com/PimentaBrrt/loloshop/releases/download/instalador/Instalar-Loloshop-e-Illostrator.exe
+
+on:
+  push:
+    branches: [main]
+    paths: ["instalador/**", ".github/workflows/instalador.yml", "layer/overlay/assets/app-icon/photocraft.ico"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: instalador
+  cancel-in-progress: false
+
+jobs:
+  instalador:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" instalador\instalador.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publish
+        shell: bash
+        run: |
+          if ! gh release view instalador >/dev/null 2>&1; then
+            gh release create instalador --prerelease --latest=false \
+              --title "Instalador do Loloshop e do Illostrator" \
+              --notes "Baixe **Instalar-Loloshop-e-Illostrator.exe** e abra. Ele baixa a versão mais nova de cada app; depois eles se atualizam sozinhos."
+          fi
+          gh release upload instalador instalador/Output/Instalar-Loloshop-e-Illostrator.exe --clobber

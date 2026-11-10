@@ -10,7 +10,19 @@ Release. Assim as novidades do PhotoCraft chegam sozinhas.
 
 ## Instalar
 
-No PowerShell:
+Baixe e abra o **[instalador do Loloshop e do Illostrator](https://github.com/PimentaBrrt/loloshop/releases/download/instalador/Instalar-Loloshop-e-Illostrator.exe)**. Ele deixa escolher os apps,
+baixa a versão mais nova de cada um, cria os atalhos, liga a atualização automática e conecta ao
+Claude Desktop. Para remover: **Configurações › Apps › Apps instalados › Loloshop e Illostrator**.
+
+O instalador não tem assinatura digital, então o Windows pode desconfiar dele:
+
+- **"O Windows protegeu o computador"** (SmartScreen): clique em **Mais informações** e depois em
+  **Executar assim mesmo**.
+- **"Uma política de Controle de Aplicativo bloqueou este arquivo"** (Controle Inteligente de
+  Aplicativos): o Windows consulta a reputação do arquivo na Microsoft, e às vezes a segunda
+  tentativa já abre. Se continuar bloqueando, use o comando abaixo.
+
+Ou, sem o instalador, no PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/PimentaBrrt/loloshop/main/install/instalar.ps1 | iex
@@ -41,6 +53,7 @@ lê a pasta Imagens e só grava em `Imagens\Loloshop Claude`; ele não precisa d
 | `layer/make-patch.sh` | Salva mudanças de código como o novo `loloshop.patch` |
 | `.github/workflows/release.yml` | Todo domingo: monta, testa, compila e publica o Release |
 | `install/` | Instalação, atualização automática e registro no Claude Desktop, no Windows |
+| `instalador/` | O instalador (Inno Setup) dos dois apps; `.github/workflows/instalador.yml` compila e publica no Release `instalador` |
 
 O workflow só publica quando o PhotoCraft, a camada ou o próprio workflow mudaram, e só se a compilação e os testes
 passarem. Se algo falhar, a última versão continua sendo a que ela recebe, e o GitHub manda um
