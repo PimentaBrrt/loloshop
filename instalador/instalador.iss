@@ -53,8 +53,8 @@ Name: "full"; Description: "Os dois apps"
 Name: "custom"; Description: "Escolher"; Flags: iscustom
 
 [Components]
-Name: "loloshop"; Description: "Loloshop: edição de fotos (baseado no PhotoCraft)"; Types: full custom
-Name: "illostrator"; Description: "Illostrator: ilustração vetorial (baseado no VectorCraft)"; Types: full custom
+Name: "loloshop"; Description: "Loloshop: edição de fotos (baseado no Photoshop)"; Types: full custom
+Name: "illostrator"; Description: "Illostrator: ilustração vetorial (baseado no Illustrator)"; Types: full custom
 
 [Tasks]
 Name: "desktopicon"; Description: "Criar atalhos na Área de Trabalho"
