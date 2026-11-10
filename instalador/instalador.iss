@@ -124,7 +124,8 @@ begin
   DownloadPage := CreateDownloadPage('Baixando os apps', 'Baixando a versão mais nova dos Releases do GitHub...', @OnDownloadProgress);
 end;
 
-{ O tag do Release mais novo de Repo (build-...), lido da API do GitHub. }
+{ O tag do Release mais novo de Repo (build-...), lido da API do GitHub; vazio quando a API não
+  responde (ela aceita 60 consultas por hora de cada endereço de internet sem login). }
 function LatestTag(const Repo, Key: String): String;
 var
   Json: AnsiString;
@@ -132,7 +133,12 @@ var
   P: Integer;
 begin
   Result := '';
-  DownloadTemporaryFile('https://api.github.com/repos/' + Repo + '/releases/latest', Key + '-release.json', '', @OnDownloadProgress);
+  try
+    DownloadTemporaryFile('https://api.github.com/repos/' + Repo + '/releases/latest', Key + '-release.json', '', @OnDownloadProgress);
+  except
+    Log('API do GitHub: ' + GetExceptionMessage);
+    Exit;
+  end;
   if not LoadStringFromFile(ExpandConstant('{tmp}\' + Key + '-release.json'), Json) then
     Exit;
   S := String(Json);
@@ -147,17 +153,21 @@ begin
 end;
 
 { Põe na fila os arquivos de um app, do Release mais novo, e grava o tag para o atualizar.ps1
-  saber que esta é a versão instalada (sem isso ele baixaria tudo de novo ao meio-dia). }
+  saber que esta é a versão instalada (sem isso ele baixaria tudo de novo ao meio-dia). Sem o tag,
+  baixa pelo endereço do Release mais novo e deixa a versão em branco: o atualizar.ps1 então baixa
+  uma vez a mais, mas a instalação não depende da API. }
 procedure AddApp(const Repo, Name, Key: String);
 var
-  Tag: String;
+  Tag, Base: String;
 begin
   Tag := LatestTag(Repo, Key);
   if Tag = '' then
-    RaiseException('não achei a versão mais nova do ' + Name);
+    Base := 'https://github.com/' + Repo + '/releases/latest/download/'
+  else
+    Base := 'https://github.com/' + Repo + '/releases/download/' + Tag + '/';
   SaveStringToFile(ExpandConstant('{tmp}\' + Key + '-versao.txt'), Tag, False);
-  DownloadPage.Add('https://github.com/' + Repo + '/releases/download/' + Tag + '/' + Name + '-windows-x64.exe', Name + '.exe', '');
-  DownloadPage.Add('https://github.com/' + Repo + '/releases/download/' + Tag + '/' + Name + '-cli-windows-x64.exe', Key + '-cli.exe', '');
+  DownloadPage.Add(Base + Name + '-windows-x64.exe', Name + '.exe', '');
+  DownloadPage.Add(Base + Name + '-cli-windows-x64.exe', Key + '-cli.exe', '');
   DownloadPage.Add('https://raw.githubusercontent.com/' + Repo + '/main/install/atualizar.ps1', Key + '-atualizar.ps1', '');
 end;
 
