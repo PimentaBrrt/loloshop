@@ -1,0 +1,12 @@
+# PhotoCraft tests the release workflow skips: ones PhotoCraft's own CI fails on its main, while the
+# change behind them is intended. One test name per line (cargo test's --skip: a name that contains
+# it is skipped), with the reason. Take a line out once PhotoCraft fixes the test.
+
+# PR #12174 (2026-11-10) puts Color Sampler points on the clicked pixel's centre (65.5, 35.5) but
+# left these artboard tests expecting the pixel's corner (65, 35).
+a_board_past_the_origin_moves_the_color_samplers_and_symmetry_with_the_document
+duplicating_a_board_beside_one_past_the_origin_moves_the_color_samplers_with_the_document
+# The same PR left these Color Sampler menu tests expecting points on pixel corners (20, 20).
+a_stale_sampler_or_odd_point_fails_gracefully
+delete_never_removes_another_sampler_after_the_list_changes_under_the_menu
+delete_removes_the_sampler_under_the_pointer_and_renumbers_the_rest
