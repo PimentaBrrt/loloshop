@@ -116,7 +116,13 @@ jobs:
           # integration tests overflow the stack (STATUS_STACK_OVERFLOW).
           CARGO_PROFILE_DEV_DEBUG: "0"
         run: |
-          $packages = "-p", "photocraft-ui-egui", "-p", "photocraft-engine", "-p", "photocraft", "-p", "photocraft-cli", "-p", "photocraft-io", "-p", "photocraft-codecs"
+          # PhotoCraft renames and merges crates (photocraft-codecs went to craft-libs): the ones
+          # gone from the workspace are left out with a warning instead of failing the run.
+          $workspace = (cargo metadata --no-deps --locked --format-version 1 | ConvertFrom-Json).packages.name
+          $wanted = "photocraft-ui-egui", "photocraft-engine", "photocraft", "photocraft-cli", "photocraft-io", "photocraft-format"
+          $gone = @($wanted | Where-Object { $workspace -notcontains $_ })
+          if ($gone) { Write-Host "::warning::Not in PhotoCraft's workspace any more, not tested: $($gone -join ', ')" }
+          $packages = @($wanted | Where-Object { $workspace -contains $_ } | ForEach-Object { '-p'; $_ })
           # PhotoCraft tests its own CI fails on, listed with the reason in layer/skip-tests.txt.
           $skip = @(Get-Content ..\layer\skip-tests.txt | ForEach-Object { ($_ -replace '#.*', '').Trim() } | Where-Object { $_ } | ForEach-Object { '--skip'; $_ })
           cargo test --locked @packages -- @skip
