@@ -22,10 +22,17 @@ cd "$DIR/locales"
 # Only the catalogs Loloshop reads: each locale's photocraft.tsv and the shared common.tsv.
 ls */photocraft.tsv */common.tsv | xargs grep -l "PhotoCraft" | xargs -r sed -i 's/PhotoCraft/Loloshop/g'
 
-# What the start screen shows instead of PhotoCraft's links (loloshop.patch, links.rs).
+# The texts loloshop.patch adds: the start screen's credit (links.rs), where PhotoCraft had its
+# links, and Preferences › AI Integrations (agents.rs), where PhotoCraft names its launcher.
 PTBR=pt-br/photocraft.tsv
-if ! grep -q $'^\tBased on Photoshop\t' "$PTBR"; then
-  [ -z "$(tail -c1 "$PTBR")" ] || echo >> "$PTBR"
-  printf '\tBased on Photoshop\tBaseado no Photoshop\n' >> "$PTBR"
-fi
+[ -z "$(tail -c1 "$PTBR")" ] || echo >> "$PTBR"
+row() {
+  grep -qF $'\t'"$1"$'\t' "$PTBR" || printf '\t%s\t%s\n' "$1" "$2" >> "$PTBR"
+}
+row "Based on Photoshop" "Baseado no Photoshop"
+row "AI apps such as Claude work with Loloshop through its MCP server. Only programs on this computer can connect." \
+    "Apps de IA como o Claude trabalham com o Loloshop pelo servidor MCP dele. Só programas deste computador podem se conectar."
+row "AI apps use their own copy of Loloshop, not this window." \
+    "Os apps de IA usam uma cópia própria do Loloshop, não esta janela."
+row "Illostrator" "Illostrator"
 echo "craft-i18n $REV in $DIR"

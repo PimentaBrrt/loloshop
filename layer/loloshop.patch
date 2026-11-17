@@ -17,6 +17,21 @@ index 184ee296b..e330ceb07 100644
      if let Err(err) = res.compile() {
          if std::env::var_os("PHOTOCRAFT_REQUIRE_WINRES").is_some() {
              return Err(std::io::Error::other(format!(
+diff --git a/apps/photocraft-cli/src/args.rs b/apps/photocraft-cli/src/args.rs
+index 919bf9a36..412e1e1fb 100644
+--- a/apps/photocraft-cli/src/args.rs
++++ b/apps/photocraft-cli/src/args.rs
+@@ -270,8 +270,8 @@ pub(crate) struct CommandsArgs {
+     pub(crate) filter: Option<String>,
+ }
+ 
+-/// Run the MCP server on stdio: in the open Loloshop window when the person lets agents use it
+-/// (ArtCraft Launcher › Settings › AI agents), otherwise headless
++/// Run the MCP server on stdio: in the open Loloshop window when the person lets agents use it,
++/// otherwise headless
+ ///
+ /// The open window is found again on every call, with no port or token to configure. Without
+ /// the person's consent, or with --headless, it runs headless: each automation root grants that
 diff --git a/apps/photocraft/build.rs b/apps/photocraft/build.rs
 index 54a062921..d380d216a 100644
 --- a/apps/photocraft/build.rs
@@ -215,6 +230,19 @@ index f2787511a..a888e3224 100644
  #[cfg(test)]
  mod tests {
      use super::*;
+diff --git a/crates/automation/src/live.rs b/crates/automation/src/live.rs
+index 17fd0226b..4c7980ab4 100644
+--- a/crates/automation/src/live.rs
++++ b/crates/automation/src/live.rs
+@@ -160,7 +160,7 @@ impl Live {
+             }
+             if Instant::now() >= deadline {
+                 return Err(format!(
+-                    "Loloshop didn't accept agents within {} s of starting. If it's still opening, try again in a moment; otherwise check that AI agents are on in ArtCraft Launcher › Settings › AI agents.",
++                    "Loloshop didn't accept agents within {} s of starting. If it's still opening, try again in a moment.",
+                     self.cfg.launch_timeout.as_secs()
+                 ));
+             }
 diff --git a/crates/engine/src/shell_commands.rs b/crates/engine/src/shell_commands.rs
 index c234eb164..0a8e28df7 100644
 --- a/crates/engine/src/shell_commands.rs
@@ -455,6 +483,48 @@ index bde02bf57..007c96c88 100644
 +        assert_eq!(help, ["help.checkForUpdates", "---", "help.systemInfo", "help.about"]);
      }
  }
+diff --git a/crates/ui-egui/src/prefs/prefs_ui/agents.rs b/crates/ui-egui/src/prefs/prefs_ui/agents.rs
+index da934ca6f..8ac8de383 100644
+--- a/crates/ui-egui/src/prefs/prefs_ui/agents.rs
++++ b/crates/ui-egui/src/prefs/prefs_ui/agents.rs
+@@ -59,10 +59,11 @@ pub(super) fn integration_rows(ui: &mut egui::Ui, obj: &mut Map<String, Value>,
+     let t = Tokens::get(ui.ctx());
+     let status = f.get("__agentLink").cloned().unwrap_or(Value::Null);
+     let launch_flags = status.get("launchFlags").and_then(Value::as_bool) == Some(true);
+-    // One switch for every Craft app: ArtCraft Launcher › Settings › AI agents. There is none here.
++    // Loloshop's installer gives Claude Desktop a headless `mcp` (install/instalar.ps1); the
++    // switch that lets agents into this window is a launcher Loloshop doesn't have.
+     ui.label(
+         RichText::new(tl!(
+-            "AI apps such as Claude can open, edit and save documents in this window while ArtCraft Launcher › Settings › AI agents › Let AI agents use Craft apps is on. Only programs on this computer can connect."
++            "AI apps such as Claude work with Loloshop through its MCP server. Only programs on this computer can connect."
+         ))
+         .color(t.text_dim),
+     );
+@@ -73,7 +74,7 @@ pub(super) fn integration_rows(ui: &mut egui::Ui, obj: &mut Map<String, Value>,
+         (true, _, _) => (tl!("Managed by the launch options (--control).").to_string(), t.text_dim),
+         (false, _, Some(e)) => (e.to_string(), t.danger),
+         (false, Some(p), None) => (crate::i18n::fmt(tl!("Agents can connect on 127.0.0.1:{port}."), &[("port", &p.to_string())]), t.accent_text),
+-        (false, None, None) => (tl!("Off: turn on AI agents in ArtCraft Launcher › Settings › AI agents.").to_string(), t.text_faint),
++        (false, None, None) => (tl!("AI apps use their own copy of Loloshop, not this window.").to_string(), t.text_faint),
+     };
+     ui.label(RichText::new(line).color(color));
+     ui.add_space(8.0);
+diff --git a/crates/ui-egui/src/prefs/prefs_ui/agents_tests.rs b/crates/ui-egui/src/prefs/prefs_ui/agents_tests.rs
+index c5a246766..d9fe57192 100644
+--- a/crates/ui-egui/src/prefs/prefs_ui/agents_tests.rs
++++ b/crates/ui-egui/src/prefs/prefs_ui/agents_tests.rs
+@@ -139,8 +139,8 @@ fn ai_integrations_point_to_the_launcher_and_have_no_switch_or_client_buttons()
+     for label in ["Let AI agents connect (MCP)", "Copy Configuration", "Add to Claude Desktop", "Copy Prompt for an Agent"] {
+         assert!(h.query_by_label(label).is_none(), "{label}");
+     }
+-    h.get_by_label_contains("ArtCraft Launcher › Settings › AI agents › Let AI agents use Craft apps");
+-    h.get_by_label("Off: turn on AI agents in ArtCraft Launcher › Settings › AI agents.");
++    h.get_by_label_contains("AI apps such as Claude work with Loloshop through its MCP server");
++    h.get_by_label("AI apps use their own copy of Loloshop, not this window.");
+     assert!(h.query_by_label("Folder agents can open from").is_some(), "the folders stay");
+ }
+ 
 diff --git a/crates/ui-egui/src/smart_svg_ui.rs b/crates/ui-egui/src/smart_svg_ui.rs
 index 43ac60733..617f85bc6 100644
 --- a/crates/ui-egui/src/smart_svg_ui.rs
