@@ -1,33 +1,104 @@
 diff --git a/apps/photocraft-cli/build.rs b/apps/photocraft-cli/build.rs
-index 184ee296b..a8954e5c1 100644
+index 184ee296b..e330ceb07 100644
 --- a/apps/photocraft-cli/build.rs
 +++ b/apps/photocraft-cli/build.rs
-@@ -30,8 +30,8 @@ fn main() -> std::io::Result<()> {
+@@ -30,10 +30,10 @@ fn main() -> std::io::Result<()> {
      res.set_icon("../../assets/app-icon/photocraft.ico")
          .set("ProductName", "Loloshop")
          .set("FileDescription", "Loloshop command-line interface")
 -        .set("CompanyName", "Learning Machines LLC")
 -        .set("LegalCopyright", "Copyright (c) the Loloshop authors. MIT OR Apache-2.0.")
+-        .set("OriginalFilename", "photocraft-cli.exe")
+-        .set("InternalName", "photocraft-cli");
 +        .set("CompanyName", "Loloshop")
 +        .set("LegalCopyright", "Copyright (c) the PhotoCraft authors (Loloshop is a modified fork). MIT OR Apache-2.0.")
-         .set("OriginalFilename", "photocraft-cli.exe")
-         .set("InternalName", "photocraft-cli");
++        .set("OriginalFilename", "loloshop-cli.exe")
++        .set("InternalName", "loloshop-cli");
      if let Err(err) = res.compile() {
+         if std::env::var_os("PHOTOCRAFT_REQUIRE_WINRES").is_some() {
+             return Err(std::io::Error::other(format!(
 diff --git a/apps/photocraft/build.rs b/apps/photocraft/build.rs
-index 54a062921..81fd0fffd 100644
+index 54a062921..d380d216a 100644
 --- a/apps/photocraft/build.rs
 +++ b/apps/photocraft/build.rs
-@@ -26,8 +26,8 @@ fn main() {
+@@ -26,10 +26,10 @@ fn main() {
      res.set_icon("../../assets/app-icon/photocraft.ico")
          .set("ProductName", "Loloshop")
          .set("FileDescription", "Loloshop image editor")
 -        .set("CompanyName", "Learning Machines LLC")
 -        .set("LegalCopyright", "Copyright (c) the Loloshop authors. MIT OR Apache-2.0.")
+-        .set("OriginalFilename", "photocraft.exe")
+-        .set("InternalName", "photocraft");
 +        .set("CompanyName", "Loloshop")
 +        .set("LegalCopyright", "Copyright (c) the PhotoCraft authors (Loloshop is a modified fork). MIT OR Apache-2.0.")
-         .set("OriginalFilename", "photocraft.exe")
-         .set("InternalName", "photocraft");
++        .set("OriginalFilename", "Loloshop.exe")
++        .set("InternalName", "Loloshop");
      if let Err(e) = res.compile() {
+         if std::env::var_os("PHOTOCRAFT_REQUIRE_WINRES").is_some() {
+             panic!("embedding Windows resources failed: {e}");
+diff --git a/apps/photocraft/src/external_svg.rs b/apps/photocraft/src/external_svg.rs
+index 2905bd91d..65484759d 100644
+--- a/apps/photocraft/src/external_svg.rs
++++ b/apps/photocraft/src/external_svg.rs
+@@ -152,15 +152,15 @@ mod native {
+                 || resolved.program.file_name().is_some_and(|name| {
+                     let name = name.to_string_lossy().to_ascii_lowercase();
+                     let stem = name.strip_suffix(".exe").unwrap_or(&name);
+-                    stem == "vectorcraft" || stem == "ai.storyteller.vectorcraft" || (stem.starts_with("vectorcraft-") && !stem.starts_with("vectorcraft-cli"))
++                    stem == "illostrator" || stem == "vectorcraft" || stem == "ai.storyteller.vectorcraft" || (stem.starts_with("vectorcraft-") && !stem.starts_with("vectorcraft-cli"))
+                 })
+                 || vectorcraft_programs().contains(&resolved.program))
+     }
+ 
+-    /// True when `program`'s directory holds a regular (not linked) `vectorcraft-cli`.
++    /// True when `program`'s directory holds a regular (not linked) `illostrator-cli` (as the
++    /// Loloshop installer puts it beside Illostrator) or `vectorcraft-cli`.
+     fn has_adjacent_cli(program: &Path) -> bool {
+-        let name = if cfg!(windows) { "vectorcraft-cli.exe" } else { "vectorcraft-cli" };
+-        program.parent().is_some_and(|directory| std::fs::symlink_metadata(directory.join(name)).is_ok_and(|m| m.is_file() && !m.file_type().is_symlink()))
++        program.parent().is_some_and(|directory| super::vector_conversion::adjacent_cli(directory).is_some())
+     }
+ 
+     /// The executable whose adjacent `vectorcraft-cli` converts AI/PDF/EPS previews. A selected
+@@ -176,7 +176,7 @@ mod native {
+         vectorcraft_programs()
+             .into_iter()
+             .find(|program| has_adjacent_cli(program))
+-            .ok_or_else(|| "AI/PDF/EPS editing also needs an installed VectorCraft CLI to validate display previews".into())
++            .ok_or_else(|| "AI/PDF/EPS editing also needs Illostrator installed to validate display previews".into())
+     }
+ 
+     /// A known VectorCraft location: a bare executable, or a macOS application bundle.
+@@ -233,7 +233,7 @@ mod native {
+                 .into_iter()
+                 .next()
+                 .map(Resolved::direct)
+-                .ok_or_else(|| format!("VectorCraft was not found. Choose its executable with {OTHER_APPLICATION}")),
++                .ok_or_else(|| format!("Illostrator was not found. Choose its executable with {OTHER_APPLICATION}")),
+             ExternalSvgEditor::Illustrator if cfg!(target_os = "macos") => newest_illustrator(Path::new("/Applications")),
+             ExternalSvgEditor::Illustrator => Err(format!("Choose a local executable with {OTHER_APPLICATION}")),
+         }
+@@ -417,7 +417,11 @@ mod native {
+         match editor {
+             ExternalSvgEditor::Program(path) => validate_executable(Path::new(&path)),
+             ExternalSvgEditor::VectorCraft => {
++                // Illostrator, where the Loloshop installer puts it, before VectorCraft's own.
+                 let mut candidates = vec![];
++                if let Some(root) = std::env::var_os("LOCALAPPDATA") {
++                    candidates.push(PathBuf::from(root).join("Programs/Illostrator/Illostrator.exe"));
++                }
+                 for variable in ["ProgramFiles", "ProgramFiles(x86)"] {
+                     if let Some(root) = std::env::var_os(variable) {
+                         candidates.push(PathBuf::from(root).join("VectorCraft/vectorcraft.exe"));
+@@ -429,7 +433,7 @@ mod native {
+                 candidates
+                     .into_iter()
+                     .find_map(|path| validate_executable(&path).ok())
+-                    .ok_or_else(|| format!("VectorCraft was not found. Choose its executable with {OTHER_APPLICATION}"))
++                    .ok_or_else(|| format!("Illostrator was not found. Choose its executable with {OTHER_APPLICATION}"))
+             }
+             ExternalSvgEditor::Illustrator => {
+                 let mut candidates = vec![];
 diff --git a/apps/photocraft/src/updates.rs b/apps/photocraft/src/updates.rs
 index 31337f1ba..43580880c 100644
 --- a/apps/photocraft/src/updates.rs
@@ -44,6 +115,106 @@ index 31337f1ba..43580880c 100644
 -    Ok(found.map(|release| Release { version: release.tag.trim_start_matches(['v', 'V']).to_string(), url: release.html_url }))
 +    Ok(None::<Release>)
  }
+diff --git a/apps/photocraft/src/vector_conversion.rs b/apps/photocraft/src/vector_conversion.rs
+index f2787511a..a888e3224 100644
+--- a/apps/photocraft/src/vector_conversion.rs
++++ b/apps/photocraft/src/vector_conversion.rs
+@@ -49,15 +49,10 @@ fn run_export(editor: &Path, source: &ExternalVectorSource, stop: &Receiver<()>,
+         return Err("The saved bytes do not match the original vector format".into());
+     }
+     let owned = OwnedSvg::create_format(&source.bytes, format)?;
+-    let cli_name = if cfg!(windows) { "vectorcraft-cli.exe" } else { "vectorcraft-cli" };
+-    let cli = editor.parent().ok_or("The editor has no installation directory")?.join(cli_name);
+-    // Selecting an editor explicitly also selects its adjacent VectorCraft CLI; PATH and the
+-    // embedded file name never participate in executable discovery.
+-    let metadata =
+-        std::fs::symlink_metadata(&cli).map_err(|_| "Embedded AI/PDF/EPS editing needs vectorcraft-cli next to the selected VectorCraft executable")?;
+-    if !metadata.is_file() || metadata.file_type().is_symlink() {
+-        return Err("VectorCraft CLI must be a regular file".into());
+-    }
++    // Selecting an editor explicitly also selects its adjacent CLI; PATH and the embedded file
++    // name never participate in executable discovery.
++    let cli = adjacent_cli(editor.parent().ok_or("The editor has no installation directory")?)
++        .ok_or("Embedded AI/PDF/EPS editing needs illostrator-cli next to the selected Illostrator")?;
+     let input = owned.root.join(format!("Source.{}", source.extension));
+     let mut file = std::fs::OpenOptions::new().write(true).create_new(true).open(&input).map_err(|e| format!("Cannot create vector input: {e}"))?;
+     file.write_all(&source.bytes).map_err(|e| format!("Cannot write vector input: {e}"))?;
+@@ -83,9 +78,9 @@ fn run_export(editor: &Path, source: &ExternalVectorSource, stop: &Receiver<()>,
+         .stdout(Stdio::from(responses_output))
+         .stderr(Stdio::null())
+         .spawn()
+-        .map_err(|e| format!("Cannot start VectorCraft conversion: {e}"))?;
++        .map_err(|e| format!("Cannot start Illostrator conversion: {e}"))?;
+     let result = (|| {
+-        let mut stdin = child.stdin.take().ok_or("VectorCraft conversion input is unavailable")?;
++        let mut stdin = child.stdin.take().ok_or("Illostrator conversion input is unavailable")?;
+         for (id, command, params) in commands {
+             let request = serde_json::json!({"jsonrpc":"2.0","id":id,"method":"tools/call","params":{"name":"run_command","arguments":{"command":command,"params":params}}});
+             writeln!(stdin, "{request}").map_err(|e| format!("Cannot send vector conversion request: {e}"))?;
+@@ -98,12 +93,12 @@ fn run_export(editor: &Path, source: &ExternalVectorSource, stop: &Receiver<()>,
+             }
+             if let Some(status) = child.try_wait().map_err(|e| format!("Cannot wait for vector conversion: {e}"))? {
+                 if !status.success() {
+-                    return Err("VectorCraft could not convert the embedded vector".into());
++                    return Err("Illostrator could not convert the embedded vector".into());
+                 }
+                 break;
+             }
+             if Instant::now() >= deadline {
+-                return Err("VectorCraft conversion timed out".into());
++                return Err("Illostrator conversion timed out".into());
+             }
+             std::thread::sleep(Duration::from_millis(25));
+         }
+@@ -114,7 +109,7 @@ fn run_export(editor: &Path, source: &ExternalVectorSource, stop: &Receiver<()>,
+         validate_responses(&responses)?;
+         let converted = owned.read(&owned.stamp()?)?;
+         if format == "ai" && !converted.starts_with(b"%PDF-") {
+-            return Err("VectorCraft did not save a PDF-compatible AI working copy".into());
++            return Err("Illostrator did not save a PDF-compatible AI working copy".into());
+         }
+         Ok(converted)
+     })();
+@@ -150,7 +145,7 @@ fn source_svg(bytes: &[u8], size: Option<(f64, f64)>) -> Result<Vec<u8>, String>
+     let root = craft_xml::parse(text.as_bytes()).map_err(|e| format!("Invalid converted SVG: {e}"))?;
+     let local_name = root.name.rsplit_once(':').map_or(root.name.as_str(), |(_, l)| l);
+     if local_name != "svg" {
+-        return Err("VectorCraft did not return SVG".into());
++        return Err("Illostrator did not return SVG".into());
+     }
+     let Some((w, h)) = size else {
+         return Ok(bytes.to_vec());
+@@ -179,19 +174,26 @@ fn source_svg(bytes: &[u8], size: Option<(f64, f64)>) -> Result<Vec<u8>, String>
+ /// Require successful replies for both opening the source and exporting the SVG.
+ fn validate_responses(text: &str) -> Result<(), String> {
+     if text.len() > 1024 * 1024 {
+-        return Err("VectorCraft conversion responses exceeded the limit".into());
++        return Err("Illostrator conversion responses exceeded the limit".into());
+     }
+     let replies: Vec<serde_json::Value> =
+-        text.lines().map(serde_json::from_str).collect::<Result<_, _>>().map_err(|_| "Invalid VectorCraft conversion response")?;
++        text.lines().map(serde_json::from_str).collect::<Result<_, _>>().map_err(|_| "Invalid Illostrator conversion response")?;
+     for id in [1, 2] {
+-        let reply = replies.iter().find(|r| r.get("id").and_then(serde_json::Value::as_u64) == Some(id)).ok_or("Missing VectorCraft conversion response")?;
++        let reply = replies.iter().find(|r| r.get("id").and_then(serde_json::Value::as_u64) == Some(id)).ok_or("Missing Illostrator conversion response")?;
+         if reply.get("error").is_some() || reply.get("result").and_then(|r| r.get("isError")).and_then(serde_json::Value::as_bool) != Some(false) {
+-            return Err("VectorCraft could not open or export the embedded vector; original contents were retained".into());
++            return Err("Illostrator could not open or export the embedded vector; original contents were retained".into());
+         }
+     }
+     Ok(())
+ }
+ 
++/// The CLI in `directory` that converts AI/PDF/EPS previews: `illostrator-cli` (the Loloshop
++/// installer puts it beside Illostrator) or `vectorcraft-cli`, a regular file and not a link.
++pub(crate) fn adjacent_cli(directory: &std::path::Path) -> Option<std::path::PathBuf> {
++    let names: &[&str] = if cfg!(windows) { &["illostrator-cli.exe", "vectorcraft-cli.exe"] } else { &["illostrator-cli", "vectorcraft-cli"] };
++    names.iter().map(|name| directory.join(name)).find(|cli| std::fs::symlink_metadata(cli).is_ok_and(|m| m.is_file() && !m.file_type().is_symlink()))
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
 diff --git a/crates/engine/src/shell_commands.rs b/crates/engine/src/shell_commands.rs
 index c234eb164..0a8e28df7 100644
 --- a/crates/engine/src/shell_commands.rs
@@ -284,3 +455,16 @@ index bde02bf57..007c96c88 100644
 +        assert_eq!(help, ["help.checkForUpdates", "---", "help.systemInfo", "help.about"]);
      }
  }
+diff --git a/crates/ui-egui/src/smart_svg_ui.rs b/crates/ui-egui/src/smart_svg_ui.rs
+index 43ac60733..617f85bc6 100644
+--- a/crates/ui-egui/src/smart_svg_ui.rs
++++ b/crates/ui-egui/src/smart_svg_ui.rs
+@@ -281,7 +281,7 @@ pub(crate) fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
+             ));
+         }
+         for (choice, label) in [
+-            (Editor::VectorCraft, "VectorCraft"),
++            (Editor::VectorCraft, "Illostrator"),
+             (Editor::Illustrator, "Adobe Illustrator"),
+             (Editor::Program, "Other application"),
+             (Editor::Internal, "Loloshop (internal editor)"),
