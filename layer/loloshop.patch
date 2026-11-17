@@ -1,8 +1,8 @@
 diff --git a/apps/photocraft-cli/build.rs b/apps/photocraft-cli/build.rs
-index af544ed92..568d08028 100644
+index 184ee296b..a8954e5c1 100644
 --- a/apps/photocraft-cli/build.rs
 +++ b/apps/photocraft-cli/build.rs
-@@ -27,8 +27,8 @@ fn main() -> std::io::Result<()> {
+@@ -30,8 +30,8 @@ fn main() -> std::io::Result<()> {
      res.set_icon("../../assets/app-icon/photocraft.ico")
          .set("ProductName", "Loloshop")
          .set("FileDescription", "Loloshop command-line interface")
@@ -14,10 +14,10 @@ index af544ed92..568d08028 100644
          .set("InternalName", "photocraft-cli");
      if let Err(err) = res.compile() {
 diff --git a/apps/photocraft/build.rs b/apps/photocraft/build.rs
-index 6de8c1923..21e558e54 100644
+index 54a062921..81fd0fffd 100644
 --- a/apps/photocraft/build.rs
 +++ b/apps/photocraft/build.rs
-@@ -23,8 +23,8 @@ fn main() {
+@@ -26,8 +26,8 @@ fn main() {
      res.set_icon("../../assets/app-icon/photocraft.ico")
          .set("ProductName", "Loloshop")
          .set("FileDescription", "Loloshop image editor")
@@ -45,10 +45,10 @@ index 31337f1ba..43580880c 100644
 +    Ok(None::<Release>)
  }
 diff --git a/crates/engine/src/shell_commands.rs b/crates/engine/src/shell_commands.rs
-index d2d28b7a9..04154208c 100644
+index c234eb164..0a8e28df7 100644
 --- a/crates/engine/src/shell_commands.rs
 +++ b/crates/engine/src/shell_commands.rs
-@@ -93,11 +93,6 @@ pub const SHELL_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
+@@ -95,11 +95,6 @@ pub const SHELL_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
      ("window.theme.softLight", "Soft", &["Window", "Theme", "Light Theme"], None),
      ("window.theme.system", "Sync with system", &["Window", "Theme"], None),
      ("edit.search", "Search…", &["Edit"], Some("Cmd+F")),
@@ -123,10 +123,10 @@ index 7f9d0ebac..6fcf86d77 100644
  
  fn render_start_content(app: &mut PhotocraftApp, ui: &mut egui::Ui, recent: &[String], content_w: f32) {
 diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
-index 4ac23666d..b2632c1e1 100644
+index 0369b3d78..392ab3c16 100644
 --- a/crates/ui-egui/src/dialogs.rs
 +++ b/crates/ui-egui/src/dialogs.rs
-@@ -828,11 +828,7 @@ fn about_tab_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, tab: &str) {
+@@ -889,11 +889,7 @@ fn about_tab_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, tab: &str) {
              ui.label(tl!("Loloshop — an open-source, native image editor written in Rust."));
              ui.label(crate::i18n::fmt(tl!("Version {version}"), &[("version", &photocraft_engine::build_info::long_version())]));
              ui.add_space(12.0);
@@ -139,18 +139,6 @@ index 4ac23666d..b2632c1e1 100644
              ui.add_space(10.0);
              ui.weak("egui · wgpu · photocraft-engine");
          }
-diff --git a/crates/ui-egui/src/i18n/pt-br.tsv b/crates/ui-egui/src/i18n/pt-br.tsv
-index e235b73ef..6731fdd54 100644
---- a/crates/ui-egui/src/i18n/pt-br.tsv
-+++ b/crates/ui-egui/src/i18n/pt-br.tsv
-@@ -895,6 +895,7 @@
- 	About Loloshop	Sobre o Loloshop
- 	Loloshop Website	Site do Loloshop
- 	Loloshop on GitHub	Loloshop no GitHub
-+	Based on Photoshop	Baseado no Photoshop
- 	ArtCraft Website	Site do ArtCraft
- 	Join the ArtCraft Discord…	Participe do Discord do ArtCraft…
- 	Report an Issue…	Relatar um problema…
 diff --git a/crates/ui-egui/src/links.rs b/crates/ui-egui/src/links.rs
 index bde02bf57..007c96c88 100644
 --- a/crates/ui-egui/src/links.rs

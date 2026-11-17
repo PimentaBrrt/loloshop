@@ -75,6 +75,15 @@ jobs:
         # offer to replace Loloshop with PhotoCraft.
         run: bash layer/update-guard.sh upstream
 
+      - name: Fetch craft-i18n
+        if: steps.tree.outputs.skip != 'true'
+        # The translations, renamed to match the tree (layer/i18n.sh). REQUIRED fails the build
+        # instead of leaving the app in English only.
+        run: |
+          bash layer/i18n.sh craft-i18n upstream
+          echo "CRAFT_I18N_DIR=$(cygpath -w "$PWD/craft-i18n")" >> "$GITHUB_ENV"
+          echo "CRAFT_I18N_REQUIRED=1" >> "$GITHUB_ENV"
+
       - name: Fetch craft-fonts
         if: steps.tree.outputs.skip != 'true' && steps.tree.outputs.fonts != ''
         run: |
